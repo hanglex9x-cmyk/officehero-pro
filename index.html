@@ -3949,10 +3949,39 @@ window.__onTab = function(id){ openGroups.add(id); updateViewBar(); syncSidebar(
     var d = new Date(iso+'T00:00:00'); d.setMonth(d.getMonth()+m);
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
-  function getPro(){ var p = store.get(K_PRO, null); return (p && p.expires) ? p : null; }
+  /* Lớp lưu trạng thái bản quyền nhiều tầng (chỉ 2 khóa của cổng này):
+     bộ nhớ phiên luôn giữ bản mới nhất để chip đổi sang PRO ngay sau khi
+     kích hoạt; localStorage (store sẵn có của app) là kênh chính; cookie
+     là kênh dự phòng khi localStorage bị webview chặn/ghi thất bại —
+     trước đây store nuốt mọi lỗi nên kích hoạt báo thành công mà trạng
+     thái Pro không lưu được, chip cứ đọc ra bản dùng thử. */
+  var licMem = {};
+  function licCookieGet(k){
+    try{
+      var parts = document.cookie ? document.cookie.split(';') : [], i, kv;
+      for(i=0;i<parts.length;i++){ kv = parts[i].split('='); if(kv[0].trim()===k) return decodeURIComponent(kv.slice(1).join('=')); }
+    }catch(e){}
+    return null;
+  }
+  function licCookieSet(k, v){
+    try{ document.cookie = k + '=' + encodeURIComponent(v) + ';path=/;max-age=34560000;SameSite=Lax'; }catch(e){}
+  }
+  function licGet(k){
+    var v = store.get(k, null);
+    if(v !== null && v !== undefined) { licMem[k] = v; return v; }
+    var c = licCookieGet(k);
+    if(c !== null){ try{ v = JSON.parse(c); }catch(e){ v = c; } licMem[k] = v; return v; }
+    return (k in licMem) ? licMem[k] : null;
+  }
+  function licSet(k, v){
+    licMem[k] = v;
+    store.set(k, v);
+    licCookieSet(k, JSON.stringify(v));
+  }
+  function getPro(){ var p = licGet(K_PRO); return (p && p.expires) ? p : null; }
   function trialStart(){
-    var s = store.get(K_START, null);
-    if(!s){ s = todayISO(); store.set(K_START, s); }
+    var s = licGet(K_START);
+    if(!s){ s = todayISO(); licSet(K_START, s); }
     return s;
   }
   function status(){
@@ -4022,12 +4051,9 @@ window.__onTab = function(id){ openGroups.add(id); updateViewBar(); syncSidebar(
       err.textContent = 'Mã kích hoạt không đúng. Vui lòng kiểm tra lại mã Hằng đã cấp, hoặc liên hệ hanglex9x@gmail.com để được hỗ trợ.';
       inp.focus(); return;
     }
-    if(plan !== selPlan){
-      err.textContent = 'Mã này thuộc gói ' + PLAN_LABEL[plan] + ' — đã chuyển lựa chọn sang gói ' + PLAN_LABEL[plan] + ' cho bạn. Bấm "Kích hoạt Pro" lần nữa để xác nhận.';
-      setPlan(plan); return;
-    }
+    if(plan !== selPlan) setPlan(plan); /* gói lấy theo đúng mã đã nhập: kích hoạt ngay trong 1 lần bấm, thẻ gói tự đồng bộ theo mã */
     var expires = addMonthsISO(todayISO(), plan==='6m' ? 6 : 12);
-    store.set(K_PRO, { code: code, plan: plan, activated: todayISO(), expires: expires });
+    licSet(K_PRO, { code: code, plan: plan, activated: todayISO(), expires: expires });
     err.textContent = '';
     toast('Đã kích hoạt OfficeHero Pro — gói ' + PLAN_LABEL[plan] + ', dùng đến ' + fmtDate(expires));
     hideGate();
@@ -4037,9 +4063,9 @@ window.__onTab = function(id){ openGroups.add(id); updateViewBar(); syncSidebar(
     var st = status();
     if(chip && txt && btn){
       chip.classList.remove('hidden');
-      if(st.type==='pro'){ txt.innerHTML = '<strong>OfficeHero Pro</strong> · Gói ' + PLAN_LABEL[st.pro.plan] + '<br>Còn hạn đến ' + fmtDate(st.pro.expires); btn.textContent = 'Gia hạn / đổi gói Pro'; }
-      else if(st.type==='trial'){ txt.innerHTML = '<strong>Bản dùng thử</strong> · Còn <strong>' + st.daysLeft + ' ngày</strong>'; btn.textContent = 'Đăng ký Pro'; }
-      else { txt.innerHTML = st.type==='proExpired' ? '<strong>Gói Pro đã hết hạn</strong>' : '<strong>Đã hết hạn dùng thử</strong>'; btn.textContent = 'Đăng ký Pro'; }
+      if(st.type==='pro'){ txt.innerHTML = '<strong>PRO · ' + PLAN_LABEL[st.pro.plan] + '</strong><br>Hạn đến ' + fmtDate(st.pro.expires); btn.classList.add('hidden'); }
+      else if(st.type==='trial'){ btn.classList.remove('hidden'); txt.innerHTML = '<strong>Bản dùng thử</strong> · Còn <strong>' + st.daysLeft + ' ngày</strong>'; btn.textContent = 'Đăng ký Pro'; }
+      else { btn.classList.remove('hidden'); txt.innerHTML = st.type==='proExpired' ? '<strong>Gói Pro đã hết hạn</strong>' : '<strong>Đã hết hạn dùng thử</strong>'; btn.textContent = 'Đăng ký Pro'; }
     }
     if(mob){
       mob.classList.remove('hidden');
