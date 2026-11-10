@@ -531,7 +531,7 @@ body.gate-on{overflow:hidden}
         <button type="button" class="plan-card" data-plan="1y"><span class="plan-name">Gói 1 năm</span><span class="plan-price">Giá: 99.000đ · Dùng 1 năm</span></button>
       </div>
       <p class="gate-note"><strong>Mỗi tài khoản Pro sử dụng được trên 2 máy</strong> — kích hoạt bằng cùng một mã trên tối đa 2 máy của bạn.</p>
-      <a id="gateMailBtn" class="btn btn-primary gate-wide" style="margin-top:.9rem" href="mailto:hanglex9x@gmail.com">Liên hệ đăng ký qua email</a>
+      <a id="gateZaloBtn" class="btn btn-primary gate-wide" style="margin-top:.9rem" href="https://zalo.me/0707890005" target="_blank" rel="noopener">Liên hệ đăng ký qua Zalo</a>
       <div class="gate-divider"><span>Đã có mã kích hoạt?</span></div>
       <label class="lbl" for="gateCodeInput">Mã kích hoạt Pro — Hằng cấp sau khi xác nhận đăng ký</label>
       <input id="gateCodeInput" class="inp mono" type="text" placeholder="Ví dụ: OHP12-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" />
@@ -3915,7 +3915,7 @@ window.__onTab = function(id){ openGroups.add(id); updateViewBar(); syncSidebar(
      còn lại (huy hiệu ở sidebar / thanh trên của điện thoại). Hết 7
      ngày → khóa app, hiện màn hình đăng ký Pro.
    • Pro: chỉ có gói 1 năm 99.000đ, mỗi tài khoản Pro sử dụng được
-     trên 2 máy, liên hệ đăng ký qua email hanglex9x@gmail.com, nhập
+     trên 2 máy, liên hệ đăng ký qua Zalo https://zalo.me/0707890005, nhập
      mã kích hoạt Hằng cấp để mở khóa 1 năm. Người đã có Pro nhập mã của mình
      ở ngay màn hình đăng nhập để dùng tiếp, không cần dùng thử lại.
    • Mã kích hoạt chỉ lưu dạng MÃ BĂM trong trang; mã gốc do Hằng giữ
@@ -4027,10 +4027,7 @@ window.__onTab = function(id){ openGroups.add(id); updateViewBar(); syncSidebar(
     selPlan = p;
     var cards = document.querySelectorAll('.plan-card');
     for(var i=0;i<cards.length;i++) cards[i].classList.toggle('on', cards[i].getAttribute('data-plan')===p);
-    var subject = 'Đăng ký OfficeHero Pro — gói ' + PLAN_LABEL[p];
-    var priceLine = '\nGiá: 99.000đ — dùng 1 năm.';
-    var body = 'Chào Hằng,\n\nTôi muốn đăng ký OfficeHero Pro — gói ' + PLAN_LABEL[p] + '.' + priceLine + '\n(Mỗi tài khoản Pro sử dụng được trên 2 máy.)\n\nHọ tên: \nSố điện thoại: \n\nCảm ơn Hằng!';
-    $('gateMailBtn').href = 'mailto:hanglex9x@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    /* Liên hệ đăng ký qua Zalo của Hằng Lê (0707890005) — nút tĩnh trong HTML, không gán href ở đây nữa */
   }
   function canonCode(raw){
     var s = String(raw||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
