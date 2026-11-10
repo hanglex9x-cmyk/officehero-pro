@@ -479,6 +479,14 @@ body.gate-on{overflow:hidden}
 .gate-logo svg{width:31px;height:31px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
 .gate-title{font-size:1.45rem;font-weight:800;letter-spacing:-.01em;text-align:center;margin:0 0 .4rem}
 .gate-sub{color:var(--muted);font-size:.9rem;text-align:center;margin:0 0 1.1rem;line-height:1.55}
+.gate-price{width:100%;display:flex;align-items:center;justify-content:space-between;gap:.9rem;text-align:left;border:1.5px solid var(--indigo);background:var(--surface2);color:var(--ink);border-radius:14px;padding:.8rem 1rem;margin:0 0 1rem;cursor:pointer;font-family:inherit}
+.gate-price:hover{box-shadow:0 0 0 3px rgba(79,70,229,.18)}
+.gate-price-main{display:flex;flex-direction:column;gap:.08rem;min-width:0}
+.gate-price-label{font-size:.78rem;font-weight:700;color:var(--muted)}
+.gate-price-value{font-size:1.45rem;font-weight:800;line-height:1.15}
+.gate-price-per{font-size:.95rem;font-weight:700;color:var(--muted)}
+.gate-price-sub{font-size:.78rem;color:var(--muted);line-height:1.45}
+.gate-price-cta{flex:none;font-weight:800;color:var(--indigo);font-size:.9rem;white-space:nowrap}
 .gate-big{width:100%;min-height:54px;font-size:1.02rem;border-radius:12px;margin-top:.2rem}
 .gate-wide{width:100%;min-height:48px;border-radius:12px}
 .gate-note{color:var(--muted);font-size:.83rem;line-height:1.55;margin:.7rem 0 0;text-align:center}
@@ -515,6 +523,14 @@ body.gate-on{overflow:hidden}
       <div class="gate-logo"><svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h13A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z"/><path d="M9 7V6a3 3 0 0 1 3-3 3 3 0 0 1 3 3v1M4 12.5h16"/></svg></div>
       <h1 class="gate-title">OfficeHero Pro</h1>
       <p class="gate-sub">Bộ công cụ văn phòng &amp; vận hành — Template Báo Cáo, PDF Studio, Học Office, Trợ Lý AI…</p>
+      <button id="gatePriceBtn" class="gate-price" type="button" aria-label="Đăng ký gói Pro — 99.000đ một năm">
+        <span class="gate-price-main">
+          <span class="gate-price-label">Gói Pro — chỉ 1 gói duy nhất</span>
+          <span class="gate-price-value">99.000đ<span class="gate-price-per"> / 1 năm</span></span>
+          <span class="gate-price-sub">Mở khóa toàn bộ tính năng · Dùng trên 2 máy</span>
+        </span>
+        <span class="gate-price-cta">Đăng ký →</span>
+      </button>
       <button id="gateTrialBtn" class="btn btn-primary gate-big" type="button">Dùng thử 7 ngày</button>
       <p class="gate-note" id="gateTrialNote">Mỗi máy được dùng thử miễn phí 7 ngày tính từ lần đầu mở trang. Bấm nút là vào app ngay — không cần tài khoản, không cần mật khẩu.</p>
       <div id="gateProInfo">
@@ -528,7 +544,7 @@ body.gate-on{overflow:hidden}
       <p class="gate-sub" id="gateProMsg"></p>
       <label class="lbl">Gói Pro</label>
       <div class="gate-plans">
-        <button type="button" class="plan-card" data-plan="1y"><span class="plan-name">Gói 1 năm</span><span class="plan-price">Giá: 99.000đ · Dùng 1 năm</span></button>
+        <button type="button" class="plan-card" data-plan="1y"><span class="plan-name">Gói 1 năm</span><span class="plan-price">Giá: 99.000đ/1 năm</span></button>
       </div>
       <p class="gate-note"><strong>Mỗi tài khoản Pro sử dụng được trên 2 máy</strong> — kích hoạt bằng cùng một mã trên tối đa 2 máy của bạn.</p>
       <a id="gateZaloBtn" class="btn btn-primary gate-wide" style="margin-top:.9rem" href="https://zalo.me/0707890005" target="_blank" rel="noopener">Liên hệ đăng ký qua Zalo</a>
@@ -4091,6 +4107,8 @@ window.__onTab = function(id){ openGroups.add(id); updateViewBar(); syncSidebar(
       note.textContent = 'Máy này đang trong thời gian dùng thử — còn ' + st.daysLeft + ' ngày. Bấm nút là vào app ngay, không cần tài khoản hay mật khẩu.';
       info.classList.remove('hidden');
     }
+    var pc = $('gatePriceBtn');
+    if(pc) pc.classList.toggle('hidden', st.type==='pro');
   }
   function setupProView(mode){
     proMode = mode || 'expired';
@@ -4159,6 +4177,8 @@ window.__onTab = function(id){ openGroups.add(id); updateViewBar(); syncSidebar(
       else hideGate();
     });
     $('gateHaveCodeBtn').addEventListener('click', function(){ showGate('pro','browse'); });
+    var priceBtn = $('gatePriceBtn');
+    if(priceBtn) priceBtn.addEventListener('click', function(){ showGate('pro','browse'); });
     $('gateBackBtn').addEventListener('click', function(){
       var st = status();
       if(st.type==='expired' || st.type==='proExpired') return; /* khóa cứng: không quay lại app được */
