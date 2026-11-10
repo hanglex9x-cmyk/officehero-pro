@@ -485,7 +485,7 @@ body.gate-on{overflow:hidden}
 .gate-note strong{color:var(--ink2)}
 .gate-divider{display:flex;align-items:center;gap:.7rem;margin:1.15rem 0 .8rem;color:var(--muted);font-size:.8rem;font-weight:600}
 .gate-divider::before,.gate-divider::after{content:"";flex:1;height:1px;background:var(--border)}
-.gate-plans{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.4rem}
+.gate-plans{display:grid;grid-template-columns:1fr;gap:.6rem;margin-bottom:.4rem}
 .plan-card{position:relative;text-align:left;border:2px solid var(--border);background:var(--surface);color:var(--ink);border-radius:14px;padding:.85rem .9rem;cursor:pointer;min-height:74px;font-family:inherit;display:flex;flex-direction:column;gap:.25rem}
 .plan-card .plan-name{font-weight:800;font-size:1rem}
 .plan-card .plan-price{font-size:.82rem;color:var(--muted)}
@@ -526,10 +526,9 @@ body.gate-on{overflow:hidden}
     <div id="gateProView" class="hidden">
       <h2 class="gate-title" id="gateProTitle">Đăng ký OfficeHero Pro</h2>
       <p class="gate-sub" id="gateProMsg"></p>
-      <label class="lbl">Chọn gói Pro</label>
+      <label class="lbl">Gói Pro</label>
       <div class="gate-plans">
-        <button type="button" class="plan-card" data-plan="6m"><span class="plan-name">Gói 6 tháng</span><span class="plan-price">Giá: đang cập nhật</span></button>
-        <button type="button" class="plan-card" data-plan="1y"><span class="plan-name">Gói 1 năm</span><span class="plan-price">Giá: đang cập nhật</span></button>
+        <button type="button" class="plan-card" data-plan="1y"><span class="plan-name">Gói 1 năm</span><span class="plan-price">Giá: 99.000đ · Dùng 1 năm</span></button>
       </div>
       <p class="gate-note"><strong>Mỗi tài khoản Pro sử dụng được trên 2 máy</strong> — kích hoạt bằng cùng một mã trên tối đa 2 máy của bạn.</p>
       <a id="gateMailBtn" class="btn btn-primary gate-wide" style="margin-top:.9rem" href="mailto:hanglex9x@gmail.com">Liên hệ đăng ký qua email</a>
@@ -3915,10 +3914,9 @@ window.__onTab = function(id){ openGroups.add(id); updateViewBar(); syncSidebar(
      đầu lưu trong trình duyệt của máy); trong app luôn hiện số ngày
      còn lại (huy hiệu ở sidebar / thanh trên của điện thoại). Hết 7
      ngày → khóa app, hiện màn hình đăng ký Pro.
-   • Pro: chọn gói 6 tháng hoặc 1 năm (giá đang cập nhật), mỗi tài
-     khoản Pro sử dụng được trên 2 máy, liên hệ đăng ký qua email
-     hanglex9x@gmail.com, nhập mã kích hoạt Hằng cấp để mở khóa theo
-     đúng hạn của gói mã thuộc về. Người đã có Pro nhập mã của mình
+   • Pro: chỉ có gói 1 năm 99.000đ, mỗi tài khoản Pro sử dụng được
+     trên 2 máy, liên hệ đăng ký qua email hanglex9x@gmail.com, nhập
+     mã kích hoạt Hằng cấp để mở khóa 1 năm. Người đã có Pro nhập mã của mình
      ở ngay màn hình đăng nhập để dùng tiếp, không cần dùng thử lại.
    • Mã kích hoạt chỉ lưu dạng MÃ BĂM trong trang; mã gốc do Hằng giữ
      và cấp cho khách sau khi xác nhận đăng ký. Mọi nút ở cổng là nút
@@ -3930,12 +3928,10 @@ window.__onTab = function(id){ openGroups.add(id); updateViewBar(); syncSidebar(
   var K_START = 'ohp_trial_start', K_PRO = 'ohp_pro';
   var SALT = 'OHP·HL·2026', SEED = 7;
   var CODE_HASH = {
-    '94b906631a35a28f':'6m','8eb586e410368a1c':'6m','6a24ac3224c12b66':'6m',
-    '52187047da34548e':'6m','67547fbd4c9ec3b0':'6m','84972a68efbe1a00':'6m',
     'eee480fb0c2f42d3':'1y','b6a10b0885d578fa':'1y','4fb16c69f003ca3e':'1y',
     '1e123ba96723ae4e':'1y','ede6983b3d6a6c06':'1y','e7b025df6db16a29':'1y'
   };
-  var PLAN_LABEL = { '6m':'6 tháng', '1y':'1 năm' };
+  var PLAN_LABEL = { '1y':'1 năm' };
   var selPlan = '1y', proMode = 'expired';
 
   function hashCode(str){
@@ -4021,7 +4017,7 @@ window.__onTab = function(id){ openGroups.add(id); updateViewBar(); syncSidebar(
     var title = $('gateProTitle'), msg = $('gateProMsg');
     if(st.type==='proExpired'){ title.textContent = 'Gói Pro đã hết hạn'; msg.textContent = 'Gói Pro trên máy này đã hết hạn ngày ' + fmtDate(st.pro.expires) + '. Gia hạn bằng cách liên hệ đăng ký rồi nhập mã kích hoạt mới bên dưới.'; }
     else if(st.type==='expired'){ title.textContent = 'Đã hết 7 ngày dùng thử'; msg.textContent = 'Thời gian dùng thử miễn phí trên máy này đã kết thúc. Đăng ký OfficeHero Pro để tiếp tục sử dụng đầy đủ tính năng.'; }
-    else if(st.type==='pro'){ title.textContent = 'Tài khoản Pro đang còn hạn'; msg.textContent = 'Máy này đã kích hoạt Pro — gói ' + PLAN_LABEL[st.pro.plan] + ', còn hạn đến ' + fmtDate(st.pro.expires) + '. Nếu có mã gia hạn hoặc mã gói khác, nhập bên dưới để kích hoạt.'; }
+    else if(st.type==='pro'){ title.textContent = 'Tài khoản Pro đang còn hạn'; msg.textContent = 'Máy này đã kích hoạt Pro — gói ' + PLAN_LABEL[st.pro.plan] + ', còn hạn đến ' + fmtDate(st.pro.expires) + '. Nếu có mã gia hạn, nhập bên dưới để kích hoạt.'; }
     else { title.textContent = 'Đăng ký OfficeHero Pro'; msg.textContent = 'Bạn vẫn còn ' + st.daysLeft + ' ngày dùng thử miễn phí. Đăng ký Pro ngay để dùng tiếp không gián đoạn sau khi hết dùng thử.'; }
     $('gateBackBtn').classList.toggle('hidden', proMode!=='browse');
     $('gateCodeErr').textContent = '';
@@ -4032,14 +4028,14 @@ window.__onTab = function(id){ openGroups.add(id); updateViewBar(); syncSidebar(
     var cards = document.querySelectorAll('.plan-card');
     for(var i=0;i<cards.length;i++) cards[i].classList.toggle('on', cards[i].getAttribute('data-plan')===p);
     var subject = 'Đăng ký OfficeHero Pro — gói ' + PLAN_LABEL[p];
-    var body = 'Chào Hằng,\n\nTôi muốn đăng ký OfficeHero Pro — gói ' + PLAN_LABEL[p] + '.\n(Mỗi tài khoản Pro sử dụng được trên 2 máy.)\n\nHọ tên: \nSố điện thoại: \n\nCảm ơn Hằng!';
+    var priceLine = '\nGiá: 99.000đ — dùng 1 năm.';
+    var body = 'Chào Hằng,\n\nTôi muốn đăng ký OfficeHero Pro — gói ' + PLAN_LABEL[p] + '.' + priceLine + '\n(Mỗi tài khoản Pro sử dụng được trên 2 máy.)\n\nHọ tên: \nSố điện thoại: \n\nCảm ơn Hằng!';
     $('gateMailBtn').href = 'mailto:hanglex9x@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
   }
   function canonCode(raw){
     var s = String(raw||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
     var pre = null, rest = '';
     if(s.indexOf('OHP12')===0){ pre = 'OHP12'; rest = s.slice(5); }
-    else if(s.indexOf('OHP6')===0){ pre = 'OHP6'; rest = s.slice(4); }
     if(!pre || rest.length!==12) return null;
     return pre + '-' + rest.slice(0,4) + '-' + rest.slice(4,8) + '-' + rest.slice(8,12);
   }
@@ -4052,7 +4048,7 @@ window.__onTab = function(id){ openGroups.add(id); updateViewBar(); syncSidebar(
       inp.focus(); return;
     }
     if(plan !== selPlan) setPlan(plan); /* gói lấy theo đúng mã đã nhập: kích hoạt ngay trong 1 lần bấm, thẻ gói tự đồng bộ theo mã */
-    var expires = addMonthsISO(todayISO(), plan==='6m' ? 6 : 12);
+    var expires = addMonthsISO(todayISO(), 12);
     licSet(K_PRO, { code: code, plan: plan, activated: todayISO(), expires: expires });
     err.textContent = '';
     toast('Đã kích hoạt OfficeHero Pro — gói ' + PLAN_LABEL[plan] + ', dùng đến ' + fmtDate(expires));
