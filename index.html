@@ -1905,7 +1905,7 @@ const PDF_GROUPS = ['Tất Cả','Tổ chức file','Chuyển đổi','Bảo m�
 let pdfGroup = 'Tất Cả';
 const PDF_TOOLS = [
  {id:'merge', name:'Ghép PDF', group:'Tổ chức file', icon:'fa-object-group', desc:'Gộp 2+ file PDF thành 1 file duy nhất', accept:'application/pdf', multi:1},
- {id:'split', name:'Tách & Xóa Trang', group:'Tổ chức file', icon:'fa-scissors', desc:'Xem thumbnail từng trang, bấm thùng rác để xóa trang rồi xuất file sạch', accept:'application/pdf'},
+ {id:'split', name:'Tách & Xóa Trang', group:'Tổ chức file', icon:'fa-scissors', desc:'Xem thumbnail từng trang, bấm thùng rác để xóa trang, hoặc nhập khoảng "từ trang – đến trang" để xóa / tách hàng loạt', accept:'application/pdf', extra:'range'},
  {id:'extract', name:'Sắp Xếp / Trích Trang', group:'Tổ chức file', icon:'fa-arrow-down-1-9', desc:'Trích các trang chỉ định (vd: 1-3,5) theo đúng thứ tự bạn nhập', accept:'application/pdf', extra:'pages'},
  {id:'rotate', name:'Xoay Trang', group:'Tổ chức file', icon:'fa-rotate-right', desc:'Xoay toàn bộ trang 90° / 180° / 270°', accept:'application/pdf', extra:'angle'},
  {id:'pagenum', name:'Đánh Số Trang', group:'Tổ chức file', icon:'fa-list-ol', desc:'Thêm số trang tự động ở chân mỗi trang', accept:'application/pdf'},
@@ -2009,6 +2009,18 @@ function renderPdfGrid(){
 }
 function pdfExtraHTML(tool){
   switch(tool.extra){
+    case 'range': return `<label class="lbl">Chọn khoảng trang — áp dụng hàng loạt</label>
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="lbl">Từ trang</label><input id="ppRangeFrom" type="number" class="inp" min="1" step="1" inputmode="numeric" placeholder="vd: 2"></div>
+        <div><label class="lbl">Đến trang</label><input id="ppRangeTo" type="number" class="inp" min="1" step="1" inputmode="numeric" placeholder="vd: 5"></div>
+      </div>
+      <p class="subtl" id="ppRangeInfo">Chọn file PDF ở trên trước — tổng số trang của file sẽ hiện ở đây để nhập khoảng cho đúng.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <button type="button" class="btn" style="min-height:48px" onclick="splitDeleteRange()"><i class="fa-solid fa-trash"></i> Xóa các trang trong khoảng</button>
+        <button type="button" class="btn btn-primary" style="min-height:48px" onclick="splitExtractRange()"><i class="fa-solid fa-scissors"></i> Tách lấy khoảng trang</button>
+      </div>
+      <p class="subtl" id="ppRangeMsg" role="alert" style="min-height:1.2em"></p>
+      <p class="subtl">Hai nút trên áp dụng ngay cho khoảng đã nhập và tải file kết quả xuống. Xóa từng trang bằng nút thùng rác trên thumbnail và nút "Xử Lý & Tải Xuống" ở dưới vẫn dùng như cũ.</p>`;
     case 'pages': return `<label class="lbl">Trang cần trích (vd: 1-3,5,8 — đúng thứ tự nhập)</label><input id="ppPages" class="inp" value="1-3">`;
     case 'angle': return `<label class="lbl">Góc xoay</label><select id="ppAngle" class="inp"><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select>`;
     case 'crop': return `<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">${['Trên','Dưới','Trái','Phải'].map((l,i)=>`<div><label class="lbl">Lề ${l} (%)</label><input id="ppCrop${i}" type="number" class="inp" value="5" min="0" max="40"></div>`).join('')}</div>`;
@@ -2085,7 +2097,76 @@ async function renderSplitThumbs(file){
       wrap.appendChild(cv); wrap.appendChild(btn); wrap.appendChild(lb); box.appendChild(wrap);
     }
     pdfStatus('Đã render '+pdf.numPages+' trang. Bấm thùng rác trên trang muốn xóa, rồi bấm Xử Lý.');
+    const ri = $('ppRangeInfo'); if(ri) ri.textContent = 'File có tổng cộng '+pdf.numPages+' trang — nhập khoảng từ trang 1 đến trang '+pdf.numPages+'.';
+    const rf = $('ppRangeFrom'), rt = $('ppRangeTo'); if(rf) rf.max = pdf.numPages; if(rt) rt.max = pdf.numPages;
   }catch(e){ box.innerHTML=''; pdfStatus('Không render được thumbnail: '+e.message); }
+}
+/* ── KHOẢNG TRANG cho Tách & Xóa Trang: 2 ô "Từ trang / Đến trang" +
+   2 nút áp dụng (xóa khoảng / tách lấy khoảng). Kiểm tra chặt: trang
+   bắt đầu >= 1, trang kết thúc <= tổng số trang, bắt đầu <= kết thúc;
+   sai thì báo rõ lỗi ngay tại panel và KHÔNG làm gì cả. ── */
+function rangeMsg(msg, isErr){
+  const m = $('ppRangeMsg');
+  if(m){ m.textContent = msg || ''; m.style.color = isErr ? 'var(--red-tx)' : 'var(--ink2)'; m.style.fontWeight = isErr ? '700' : ''; }
+  if(msg) pdfStatus(msg);
+}
+async function splitRangeSetup(){
+  if(!pdfState.files.length){ rangeMsg('Hãy chọn file PDF trước rồi mới nhập khoảng trang.', true); toast('Chưa chọn file PDF'); return null; }
+  if(typeof PDFLib==='undefined'){
+    pdfStatus('Đang tải thư viện xử lý PDF…');
+    try{ await loadLib('pdflib'); }catch(e){ rangeMsg('Không tải được thư viện xử lý PDF — kiểm tra kết nối mạng rồi thử lại.', true); return null; }
+  }
+  try{ return await loadPdfLib(pdfState.files[0]); }
+  catch(e){ rangeMsg('Không đọc được file PDF: '+(e.message||e), true); return null; }
+}
+function readPageRange(total){
+  const fa = $('ppRangeFrom'), fb = $('ppRangeTo');
+  const a = parseInt(fa ? fa.value : '', 10), b = parseInt(fb ? fb.value : '', 10);
+  if(isNaN(a) || isNaN(b)) return { err:'Hãy nhập đủ cả hai ô "Từ trang" và "Đến trang" bằng số nguyên.' };
+  if(a < 1) return { err:'Khoảng chưa hợp lệ: "Từ trang" phải từ 1 trở lên (đang nhập '+a+').' };
+  if(b > total) return { err:'Khoảng chưa hợp lệ: "Đến trang" ('+b+') vượt quá tổng số trang của file — file chỉ có '+total+' trang.' };
+  if(a > b) return { err:'Khoảng chưa hợp lệ: "Từ trang" ('+a+') phải nhỏ hơn hoặc bằng "Đến trang" ('+b+').' };
+  return { from:a, to:b };
+}
+function syncSplitThumbs(){
+  const box = $('ppThumbs'); if(!box) return;
+  Array.from(box.children).forEach((wrap, i)=>{
+    const btn = wrap.querySelector ? wrap.querySelector('.del') : null; if(!btn) return;
+    if(pdfState.deleted.has(i+1)){ wrap.style.opacity = '0.35'; btn.innerHTML = '<i class="fa-solid fa-rotate-left"></i>'; }
+    else { wrap.style.opacity = '1'; btn.innerHTML = '<i class="fa-solid fa-trash"></i>'; }
+  });
+}
+async function splitDeleteRange(){
+  const got = await splitRangeSetup(); if(!got) return;
+  const doc = got.doc, total = doc.getPageCount();
+  const r = readPageRange(total); if(r.err){ rangeMsg(r.err, true); toast('Khoảng trang chưa hợp lệ'); return; }
+  const added = [];
+  for(let p=r.from; p<=r.to; p++){ if(!pdfState.deleted.has(p)){ pdfState.deleted.add(p); added.push(p); } }
+  const keep = doc.getPageIndices().filter(i=>!pdfState.deleted.has(i+1));
+  if(!keep.length){
+    added.forEach(p=>pdfState.deleted.delete(p));
+    rangeMsg('Khoảng '+r.from+'–'+r.to+' gồm toàn bộ số trang còn lại — xóa hết sẽ thành file rỗng nên chưa xóa gì. Hãy thu hẹp khoảng hoặc khôi phục bớt trang trên thumbnail.', true);
+    return;
+  }
+  syncSplitThumbs();
+  try{
+    const out = await PDFLib.PDFDocument.create();
+    const pages = await out.copyPages(doc, keep); pages.forEach(pg=>out.addPage(pg));
+    saveArrayBuffer(await out.save(), 'tach-xoa-trang.pdf');
+    rangeMsg('Đã xóa các trang '+r.from+'–'+r.to+' và tải xuống file còn '+keep.length+' trang (tổng cộng đang đánh dấu xóa '+pdfState.deleted.size+' trang).');
+  }catch(e){ rangeMsg('Lỗi khi xuất file sau khi xóa khoảng: '+(e.message||e), true); }
+}
+async function splitExtractRange(){
+  const got = await splitRangeSetup(); if(!got) return;
+  const doc = got.doc, total = doc.getPageCount();
+  const r = readPageRange(total); if(r.err){ rangeMsg(r.err, true); toast('Khoảng trang chưa hợp lệ'); return; }
+  const idx = []; for(let p=r.from; p<=r.to; p++) idx.push(p-1);
+  try{
+    const out = await PDFLib.PDFDocument.create();
+    const pages = await out.copyPages(doc, idx); pages.forEach(pg=>out.addPage(pg));
+    saveArrayBuffer(await out.save(), 'tach-khoang-trang-'+r.from+'-'+r.to+'.pdf');
+    rangeMsg('Đã tách lấy các trang '+r.from+'–'+r.to+' thành file PDF mới ('+idx.length+' trang) và tải xuống. File gốc và danh sách trang đã đánh dấu xóa không thay đổi.');
+  }catch(e){ rangeMsg('Lỗi khi tách khoảng trang: '+(e.message||e), true); }
 }
 async function loadFormFields(file){
   const box = $('ppFormFields'); if(!box) return; box.innerHTML='<p class="subtl">Đang đọc biểu mẫu…</p>';
